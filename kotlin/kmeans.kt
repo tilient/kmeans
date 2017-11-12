@@ -6,7 +6,8 @@
 //-- to run:
 //--   kotlin -cp classes:jackson.jar KmeansKt
 //---------
-//-- with kscript: ./kmeans.kt
+//-- with kscript: ./kmeans.kt 
+//-- or kscript https://git.io/vFrnS
 //--------------------------------------------------------------------
 
 //DEPS com.fasterxml.jackson.core:jackson-core:2.4.4
