@@ -1,53 +1,41 @@
-// extern crate time;
-// extern crate serde;
-// extern crate serde_json;
-// #[macro_use]
-// extern crate serde_derive;
-//
-// use std::path::Path;
-// use std::fs::File;
-// use std::io::Read;
-// use std::collections::hash_map::Entry::{Occupied, Vacant};
-// use std::ops::{Add, Sub};
-//
-// use time::now;
-
-
 use std::mem;
 use std::io::{BufReader,BufRead};
 use std::fs::File;
 use std::time::Instant;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::hash::{Hash, Hasher};
 
 /// Main ///////////////////////////////////////////////// ///
 
 fn main() {
   let points = load_points();
-  println!("{:?}", points.len());
-  let iterations = 100;
   let start = Instant::now();
-  for _ in 0 .. iterations {
+  for _ in 1 .. 30 {
     run(&points, 10, 15);
   }
+  let centroids = run(&points, 10, 15);
   let elapsed = start.elapsed();
-  let total_time = elapsed.as_secs() as f64
-                 + elapsed.subsec_nanos() as f64 * 1e-9;
-  let iter_time = total_time / (iterations as f64);
-  println!("The average time is {}", iter_time);
+  let total_time = 1000.0 * elapsed.as_secs() as f64
+                 + elapsed.subsec_nanos() as f64 * 1e-6;
+  let iter_time = (total_time as u64) / 30;
+  println!("The average time is {} ms", iter_time);
+  for pt in centroids.iter() {
+    println!("{}, {}", pt.0, pt.1);
+  }
 }
 
-fn run(points: &Vec<Point>, n: usize, iters: u32) {
+fn run(points: &Vec<Point>,
+       n: usize, iters: u32) -> Vec<Point>{
   let mut centroids: Vec<Point> =
       points.iter().take(n).cloned().collect();
-//
-//     for _ in 0..iters {
-//         centroids = clusters(points, &centroids)
-//             .iter()
-//             .map(|g| avg(&g))
-//             .collect();
-//     }
-//     clusters(points, &centroids)
+  for _ in 0 .. iters {
+    centroids = clusters(points, &centroids)
+                  .iter()
+                  .map(|g| avg(&g))
+                  .collect();
+  }
+  centroids
 }
 
 fn load_points() -> Vec<Point> {
@@ -65,27 +53,13 @@ fn load_points() -> Vec<Point> {
 fn clusters(xs: &Vec<Point>,
             centroids: &Vec<Point>) -> Vec<Vec<Point>> {
   let mut groups: HashMap<Point, Vec<Point>> = HashMap::new();
-  for x in centroids.iter() {
-    groups.insert(*x, Vec::new());
-  }
-
   for x in xs.iter() {
     let y = x.closest(centroids);
-    match groups.get(&y) {
-      Some(v) => v.into_mut().push(*x),
-      _ => println!("ERROR"),
+    match groups.entry(y) {
+      Occupied(e) => { e.into_mut().push(*x)  },
+      Vacant(e)   => { e.insert(vec![*x]); () }
     }
-//
-//        // Notable change: avoid double hash lookups
-//        match groups.entry(y) {
-//            Occupied(entry) => entry.into_mut().push(*x),
-//            Vacant(entry) => {
-//                entry.insert(vec![*x]);
-//                ()
-//            }
-//        }
   }
-
   groups.into_iter()
         .map(|(_, v)| v)
         .collect::<Vec<Vec<Point>>>()
@@ -96,7 +70,8 @@ fn clusters(xs: &Vec<Point>,
 #[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
 struct Point(f64, f64);
 
-impl Hash for Point {
+impl Hash for Point
+{
   fn hash<H: Hasher>(&self, state: &mut H) {
     let Point(x, y) = *self;
     let x: u64 = unsafe { mem::transmute(x) };
@@ -108,7 +83,8 @@ impl Hash for Point {
 
 impl Eq for Point {}
 
-impl Point {
+impl Point
+{
   fn closest(&self, ys: &Vec<Point>) -> Point {
     let mut min_point = ys.first().unwrap();
     let mut min_dist = self.square_dist(min_point);
@@ -129,52 +105,14 @@ impl Point {
   }
 }
 
-//
-// fn avg(points: &[Point]) -> Point {
-//     let Point(x, y) = points.iter().fold(Point(0.0, 0.0), |p, &q| p + q);
-//     let k = points.len() as f64;
-//
-//     Point(x / k, y / k)
-// }
-//
-// fn closest(x: Point, ys: &[Point]) -> Point {
-//     let y0 = ys[0];
-//     let d0 = dist(y0, x);
-//     let (_, y) = ys.iter()
-//         .fold((d0, y0), |(m, p), &q| {
-//             let d = dist(q, x);
-//             if d < m { (d, q) } else { (m, p) }
-//         });
-//     y
-// }
-//
-//
-// fn sq(x: f64) -> f64 {
-//     x * x
-// }
-//
-// impl Point {
-//     pub fn norm(self: &Point) -> f64 {
-//         (sq(self.0) + sq(self.1)).sqrt()
-//     }
-// }
-//
-//
-// impl Add for Point {
-//     type Output = Point;
-//
-//     fn add(self, other: Point) -> Point {
-//         Point(self.0 + other.0, self.1 + other.1)
-//     }
-// }
-//
-// impl Sub for Point {
-//     type Output = Point;
-//
-//     fn sub(self, other: Point) -> Point {
-//         Point(self.0 - other.0, self.1 - other.1)
-//     }
-// }
-//
-// impl Eq for Point {}
-//
+fn avg(points: &Vec<Point>) -> Point {
+  let mut x = 0.0;
+  let mut y = 0.0;
+  for pt in points.iter() {
+    x += pt.0;
+    y += pt.1;
+  }
+  let k = points.len() as f64;
+  Point(x / k, y / k)
+}
+
