@@ -25,20 +25,19 @@ fn main() {
   }
 }
 
-fn run(points: &Vec<Point>,
-       n: usize, iters: u32) -> Vec<Point>{
-  let mut centroids: Vec<Point> =
+fn run(points: &Points, n: usize, iters: u32) -> Points {
+  let mut centroids: Points =
       points.iter().take(n).cloned().collect();
   for _ in 0 .. iters {
     centroids = clusters(points, &centroids)
                   .iter()
-                  .map(|g| avg(&g))
+                  .map(|g| avg(g))
                   .collect();
   }
   centroids
 }
 
-fn load_points() -> Vec<Point> {
+fn load_points() -> Points {
   let mut points = Vec::new();
   let file = File::open("../points.txt").unwrap();
   for line in BufReader::new(file).lines() {
@@ -50,22 +49,25 @@ fn load_points() -> Vec<Point> {
   points
 }
 
-fn clusters(xs: &Vec<Point>,
-            centroids: &Vec<Point>) -> Vec<Vec<Point>> {
-  let mut groups: HashMap<Point, Vec<Point>> = HashMap::new();
+fn clusters<'a>(xs: &'a Points,
+                centrs: &Points) -> Vec<RefPoints<'a>> {
+  let mut groups: HashMap<&Point, RefPoints> = HashMap::new();
   for x in xs.iter() {
-    let y = x.closest(centroids);
+    let y = x.closest(centrs);
     match groups.entry(y) {
-      Occupied(e) => { e.into_mut().push(*x)  },
-      Vacant(e)   => { e.insert(vec![*x]); () }
+      Occupied(e) => { e.into_mut().push(x)  },
+      Vacant(e)   => { e.insert(vec![x]); () }
     }
   }
   groups.into_iter()
         .map(|(_, v)| v)
-        .collect::<Vec<Vec<Point>>>()
+        .collect::<Vec<RefPoints>>()
 }
 
 /// Point //////////////////////////////////////////////// ///
+
+type Points = Vec<Point>;
+type RefPoints<'c> = Vec<&'c Point>;
 
 #[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
 struct Point(f64, f64);
@@ -85,7 +87,7 @@ impl Eq for Point {}
 
 impl Point
 {
-  fn closest(&self, ys: &Vec<Point>) -> Point {
+  fn closest<'a>(&self, ys: &'a Points) -> &'a Point {
     let mut min_point = ys.first().unwrap();
     let mut min_dist = self.square_dist(min_point);
     for x in ys.iter() {
@@ -95,7 +97,7 @@ impl Point
         min_point = x;
       }
     }
-    min_point.clone()
+    min_point
   }
 
   fn square_dist(&self, w: &Point) -> f64 {
@@ -105,7 +107,7 @@ impl Point
   }
 }
 
-fn avg(points: &Vec<Point>) -> Point {
+fn avg(points: &RefPoints) -> Point {
   let mut x = 0.0;
   let mut y = 0.0;
   for pt in points.iter() {
