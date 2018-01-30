@@ -5,9 +5,9 @@
 
 /*
  * to install libjansson:
- *   sudo apt-get install libjansson-dev
+sudo apt-get install libjansson-dev
  * to compile:
- *   clang -Wall -O3 -o kmeans kmeans.c -ljansson -lm
+clang -Wall -O3 -o kmeans kmeans.c -ljansson -lm
  * to run:
  *   ./kmeans
  */
@@ -24,6 +24,12 @@ typedef struct {
 inline long hash(Point pt)
 {
   return (long)(pt.x * 123405567891.0) ^ (long)(pt.y * 109874654321.0);
+}
+
+inline double square_dist(Point p1, Point p2)
+{
+  Point p = {p1.x - p2.x, p1.y - p2.y};
+  return (p.x * p.x) + (p.y * p.y);
 }
 
 inline double dist(Point p1, Point p2)
@@ -209,7 +215,7 @@ Point closestCentroid(Point point, PointList* centroids)
 
   for (ix = 0; ix < clen; ++ix) {
     Point centroid = pointListAt(centroids, ix);
-    double d = dist(point, centroid);
+    double d = square_dist(point, centroid);
     if (d < minDist) {
        minDist = d;
        result = centroid;
@@ -281,7 +287,7 @@ int main()
 {
   int nrOfCentroids  = 10;
   int nrOfIterations = 15;
-  int times          = 100;
+  int times          = 30;
 
   PointList points;
   PointList centroids;

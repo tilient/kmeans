@@ -6,12 +6,12 @@
 //-- to run:
 //--   kotlin -cp classes:jackson.jar KmeansKt
 //---------
-//-- with kscript: ./kmeans.kt 
+//-- with kscript: ./kmeans.kt
 //-- or kscript https://git.io/vFrnS
 //--------------------------------------------------------------------
 
-//DEPS com.fasterxml.jackson.core:jackson-core:2.4.4
-//DEPS com.fasterxml.jackson.core:jackson-databind:2.4.4
+//DEPS com.fasterxml.jackson.core:jackson-core:2.9.4
+//DEPS com.fasterxml.jackson.core:jackson-databind:2.9.4
 
 import java.io.File
 import com.fasterxml.jackson.core.type.TypeReference
@@ -90,44 +90,6 @@ fun Points.average(): Point =
   this.reduce(Point::plus) / this.size.toDouble()
 
 //--------------------------------------------------------------------
-//--- Plot -----------------------------------------------------------
-//--------------------------------------------------------------------
-
-fun plot(points: Points, centroids: Points, K: Int = 1024)
-{
-  val xs = points.map { it.x }
-  val ys = points.map { it.y }
-  val minX = xs.min() ?: 0.0
-  val minY = ys.min() ?: 0.0
-  val δX = (xs.max() ?: 0.0) - minX
-  val δY = (ys.max() ?: 0.0) - minY
-  val κX = Math.floor(K / δX).toInt()
-  val κY = Math.floor(K / δY).toInt()
-
-  val img = BufferedImage(K + 20, K + 20, BufferedImage.TYPE_INT_RGB)
-  var ix = 0
-  for (pts in points.groupBy(centroids::closestTo).values) {
-    val c = Color.getHSBColor(ix.toFloat() / N, 1.0f, 1.0f).getRGB()
-    ix += 1
-    for (pt in pts) {
-      val x = (10 + κX * (pt.x - minX)).toInt()
-      val y = (10 + κY * (pt.y - minY)).toInt()
-      img.setRGB(x, y, c)
-    }
-  }
-  for (n in 1 .. N) {
-    val c = Color.getHSBColor(n.toFloat() / N, 1.0f, 1.0f).getRGB()
-    for (x in 0 .. 100) {
-      for (y in (n * 20) .. ((n + 1) * 20)) {
-        img.setRGB(x, y, c)
-      }
-    }
-  }
-  val f = File("imgs/ttt.png")
-  ImageIO.write(img, "PNG", f)
-}
-
-//--------------------------------------------------------------------
 //-- Main ------------------------------------------------------------
 //--------------------------------------------------------------------
 
@@ -156,7 +118,6 @@ fun main(args: Array<String>)
   }
   print("ran $iterations iterations, ")
   println("average of ${time / iterations} milliseconds.")
-  plot(points, centroids)
   centroids.forEach(::println)
 }
 

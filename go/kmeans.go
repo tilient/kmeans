@@ -12,7 +12,7 @@ import (
 const (
 	n          = 10
 	iterations = 15
-	executions = 90
+	executions = 30
 )
 
 type (
