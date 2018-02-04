@@ -51,13 +51,11 @@ func (average *point) average(points []point) {
 }
 
 func (rp *point) closest(choices []point) *point {
-	minIx := 0
-	minDist := rp.dist(&choices[minIx])
+	minIx, minDist := 0, rp.dist(&choices[0])
 	for ix := 1; ix < len(choices); ix++ {
 		dist := rp.dist(&choices[ix])
 		if dist < minDist {
-			minDist = dist
-			minIx = ix
+			minIx, minDist = ix, dist
 		}
 	}
 	return &choices[minIx]
