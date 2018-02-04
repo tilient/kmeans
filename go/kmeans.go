@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"runtime/pprof"
 	"time"
 )
 
@@ -33,26 +34,25 @@ func (p1 *point) divide(d float64) {
 	p1.y /= d
 }
 
-func dist(p1, p2 *point) float64 {
+func (p1 *point) dist(p2 *point) float64 {
 	dx := p1.x - p2.x
 	dy := p1.y - p2.y
 	return math.Sqrt(dx*dx + dy*dy)
 }
 
 func (average *point) average(points []point) {
-	average.x = 0
-	average.y = 0
+	average.x, average.y = 0, 0
 	for _, point := range points {
 		average.add(point)
 	}
 	average.divide(float64(len(points)))
 }
 
-func closest(rp point, choices []point) *point {
-	minDist := dist(&rp, &choices[0])
+func (rp *point) closest(choices []point) *point {
+	minDist := rp.dist(&choices[0])
 	min := &choices[0]
 	for i := 1; i < len(choices); i++ {
-		dist := dist(&rp, &choices[i])
+		dist := rp.dist(&choices[i])
 		if dist < minDist {
 			minDist = dist
 			min = &choices[i]
@@ -64,7 +64,7 @@ func closest(rp point, choices []point) *point {
 func clusters(xs, centroids []point) clusterMap {
 	clusters := make(clusterMap)
 	for _, x := range xs {
-		closest := closest(x, centroids)
+		closest := x.closest(centroids)
 		clusters[closest] = append(clusters[closest], x)
 	}
 	return clusters
@@ -121,8 +121,20 @@ func readPoints(filename string) []point {
 	return xs
 }
 
+var cpuprofile = flag.String(
+	"cpuprofile", "", "write cpu profile to file")
+
 func main() {
 	xs := readPoints("../points.json")
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 	start := time.Now()
 	centroids := mainLoop(xs)
 	d := time.Now().Sub(start)
