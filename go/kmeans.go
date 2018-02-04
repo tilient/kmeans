@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"math"
@@ -49,16 +50,15 @@ func (average *point) average(points []point) {
 }
 
 func (rp *point) closest(choices []point) *point {
-	minDist := rp.dist(&choices[0])
-	min := &choices[0]
-	for i := 1; i < len(choices); i++ {
-		dist := rp.dist(&choices[i])
+	minIx := 0
+	minDist := rp.dist(&choices[minIx])
+	for ix := 1; ix < len(choices); ix++ {
+		dist := rp.dist(&choices[ix])
 		if dist < minDist {
-			minDist = dist
-			min = &choices[i]
+			minDist, minIx = dist, ix
 		}
 	}
-	return min
+	return &choices[minIx]
 }
 
 func clusters(xs, centroids []point) clusterMap {
