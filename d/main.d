@@ -17,8 +17,8 @@ immutable executions = 30;
 
 void main()
 {
-  Point[n] centroids;
   Point[] points = readPoints("../points.json");
+  Point[n] centroids;
 
   StopWatch sw;
   sw.start();
@@ -90,7 +90,7 @@ Point sub(Point p1, Point p2) {
 }
 
 Point div(Point p, double d) {
-	return Point(p.x/d, p.y/d);
+	return Point(p.x / d, p.y / d);
 }
 
 double norm(Point p) {
