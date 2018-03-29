@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	//"math"
+	"math"
 	"os"
 	"runtime/pprof"
 	"time"
@@ -38,8 +38,7 @@ func (p1 *point) divide(d float64) {
 func (p1 *point) dist(p2 *point) float64 {
 	dx := p1.x - p2.x
 	dy := p1.y - p2.y
-	//return math.Sqrt(dx*dx + dy*dy)
-	return dx*dx + dy*dy
+	return math.Sqrt(dx*dx + dy*dy)
 }
 
 func (average *point) average(points []point) {
@@ -51,11 +50,12 @@ func (average *point) average(points []point) {
 }
 
 func (rp *point) closest(choices []point) *point {
-	minIx, minDist := 0, rp.dist(&choices[0])
+	minIx := 0
+	minDist := rp.dist(&choices[minIx])
 	for ix := 1; ix < len(choices); ix++ {
 		dist := rp.dist(&choices[ix])
 		if dist < minDist {
-			minIx, minDist = ix, dist
+			minDist, minIx = dist, ix
 		}
 	}
 	return &choices[minIx]
