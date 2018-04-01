@@ -11,9 +11,9 @@ to compile:
 ldc2 -O -release -mcpu=native main.d
 ----------------------------------------------- */
 
-immutable n = 10;
-immutable iterations = 15;
-immutable executions = 30;
+static immutable n = 10;
+static immutable iterations = 15;
+static immutable executions = 30;
 
 void main()
 {
@@ -22,7 +22,7 @@ void main()
 
   StopWatch sw;
   sw.start();
-  foreach (i; 0 .. executions)
+  foreach (_; 0 .. executions)
     run(centroids, points);
   sw.stop();
 
@@ -41,31 +41,31 @@ Point[] readPoints(string filename) {
            .array();
 }
 
-void run(ref Point[n] centroids, Point[] points) {
+void run(ref Point[n] centroids,
+         Point[] points) {
   centroids[] = points[0 .. centroids.length];
-  foreach (i; 0 .. iterations)
-    centroids[] = clusters(points, centroids)
-                    .map!(average)
-                    .array()[];
+  foreach (_; 0 .. iterations)
+    centroids[] = points.cluster(centroids)
+                    .map!(average).array()[];
 }
 
-Point[][] clusters(Point[] points,
-                   Point[] centroids) {
-  Point[][Point] hm;
+Point[][] cluster(Point[] points,
+                  Point[] centroids) {
+  Point[][Point] clusters;
   foreach (pt; points)
-    hm[pt.closest(centroids)] ~= pt;
-  return hm.values();
+    clusters[pt.closest(centroids)] ~= pt;
+  return clusters.values();
 }
 
-Point average(Point[] points) {
-  return points.fold!(add).div(points.length);
+pure Point average(Point[] pnts) {
+  return pnts.fold!((a,b) => a+b) / pnts.length;
 }
 
-Point closest(Point p, Point[] choices) {
+pure Point closest(Point p, Point[] choices) {
   size_t minIx;
   double minDist = double.max;
   foreach (ix, choice; choices) {
-    double dist = distance(p, choice);
+    double dist = p.distance(choice);
     if (dist < minDist) {
       minIx = ix;
       minDist = dist;
@@ -79,28 +79,25 @@ Point closest(Point p, Point[] choices) {
 struct Point {
 	double x;
 	double y;
-}
 
-Point add(Point p1, Point p2) {
-	return Point(p1.x + p2.x, p1. y + p2.y);
-}
+  pure double norm() {
+  	return sqrt(x*x + y*y);
+  }
 
-Point sub(Point p1, Point p2) {
-	return Point(p1.x - p2.x, p1.y - p2.y);
-}
+  pure double distance(Point p) {
+    return (this - p).norm();
+  }
 
-Point div(Point p, double d) {
-	return Point(p.x / d, p.y / d);
-}
+  pure Point opBinary(string op)(Point pt) {
+    return mixin(
+      "Point(x " ~op~ " pt.x, y " ~op~ " pt.y)");
+  }
 
-double norm(Point p) {
-	return sqrt((p.x * p.x) + (p.y * p.y));
-}
-
-double distance(Point p1, Point p2) {
-  return p1.sub(p2).norm();
+  pure Point opBinary(string op)(ulong v) {
+    return mixin(
+      "Point(x " ~op~ " v, y " ~op~ " v)");
+  }
 }
 
 // -----------------------------------------------
-
 
