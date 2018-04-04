@@ -3,12 +3,14 @@ import std.math;
 import std.json;
 import std.file;
 import std.datetime.stopwatch;
-import std.algorithm.iteration: map, fold;
+import std.algorithm.iteration: map, reduce;
 import std.array:array;
 
 /* -----------------------------------------------
 to compile:
 ldc2 -O -release -mcpu=native main.d
+gdc -O3 -o main main.d
+
 ----------------------------------------------- */
 
 static immutable n = 10;
@@ -58,7 +60,7 @@ Point[][] cluster(Point[] points,
 }
 
 pure Point average(Point[] pnts) {
-  return pnts.fold!((a,b) => a+b) / pnts.length;
+  return pnts.reduce!((a,b) => a+b) / pnts.length;
 }
 
 pure Point closest(Point p, Point[] choices) {
