@@ -51,7 +51,7 @@ void run(ref Point[n] centroids,
                     .map!(average).array()[];
 }
 
-Point[][] cluster(Point[] points,
+ pure Point[][] cluster(Point[] points,
                   Point[] centroids) {
   Point[][Point] clusters;
   foreach (pt; points)
@@ -63,7 +63,8 @@ pure Point average(Point[] pnts) {
   return pnts.reduce!((a,b) => a+b) / pnts.length;
 }
 
-pure Point closest(Point p, Point[] choices) {
+pure @nogc
+Point closest(Point p, Point[] choices) {
   size_t minIx;
   double minDist = double.max;
   foreach (ix, choice; choices) {
@@ -82,20 +83,24 @@ struct Point {
 	double x;
 	double y;
 
-  pure double norm() {
+  pure @nogc
+  double norm() {
   	return sqrt(x*x + y*y);
   }
 
-  pure double distance(Point p) {
+  pure @nogc
+  double distance(Point p) {
     return (this - p).norm();
   }
 
-  pure Point opBinary(string op)(Point pt) {
+  pure @nogc
+  Point opBinary(string op)(Point pt) {
     return mixin(
       "Point(x " ~op~ " pt.x, y " ~op~ " pt.y)");
   }
 
-  pure Point opBinary(string op)(ulong v) {
+  pure @nogc
+  Point opBinary(string op)(ulong v) {
     return mixin(
       "Point(x " ~op~ " v, y " ~op~ " v)");
   }
