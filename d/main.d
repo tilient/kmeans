@@ -45,7 +45,7 @@ Point[] readPoints(string filename) {
 
 void run(ref Point[n] centroids,
          Point[] points) {
-  centroids[] = points[0 .. centroids.length];
+  centroids[] = points[0 .. n];
   foreach (_; 0 .. iterations)
     centroids[] = points.cluster(centroids)
                     .map!(average).array()[];
