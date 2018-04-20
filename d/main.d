@@ -1,5 +1,4 @@
 import std.stdio;
-import std.math;
 import std.json;
 import std.file;
 import std.datetime.stopwatch;
@@ -19,7 +18,7 @@ static immutable executions = 30;
 
 void main()
 {
-  Point[] points = readPoints("../points.json");
+  Points points = readPoints("../points.json");
   Point[n] centroids;
 
   StopWatch sw;
@@ -34,7 +33,7 @@ void main()
     writefln("%s : %s", ix, pt);
 }
 
-Point[] readPoints(string filename) {
+Points readPoints(in string filename) {
   return parseJSON(cast(char[])read(filename))
            .array()
            .map!(v => v.array())
@@ -44,66 +43,75 @@ Point[] readPoints(string filename) {
 }
 
 void run(ref Point[n] centroids,
-         Point[] points) {
+         in Points points) {
   centroids[] = points[0 .. n];
   foreach (_; 0 .. iterations)
     centroids[] = points.cluster(centroids)
-                    .map!(average).array()[];
+                        .map!(average).array()[];
 }
 
- pure Point[][] cluster(Point[] points,
-                  Point[] centroids) {
-  Point[][Point] clusters;
+pure
+Points[] cluster(in Points points,
+                 in Points centroids) {
+  Points[Point] clusters;
   foreach (pt; points)
     clusters[pt.closest(centroids)] ~= pt;
   return clusters.values();
 }
 
-pure Point average(Point[] pnts) {
-  return pnts.reduce!((a,b) => a+b) / pnts.length;
-}
-
-pure @nogc
-Point closest(Point p, Point[] choices) {
-  size_t minIx;
-  double minDist = double.max;
-  foreach (ix, choice; choices) {
-    double dist = p.distance(choice);
-    if (dist < minDist) {
-      minIx = ix;
-      minDist = dist;
-    }
-  }
-  return choices[minIx];
+pure
+Point average(in Points pnts) {
+  return pnts.reduce!"a+b" / pnts.length;
 }
 
 // -----------------------------------------------
+
+alias Points = Point[];
 
 struct Point {
 	double x;
 	double y;
 
   pure @nogc
-  double norm() {
-  	return sqrt(x*x + y*y);
+  double norm() const {
+    import core.math: sqrt;
+  	return sqrt(x^^2 + y^^2);
   }
 
   pure @nogc
-  double distance(Point p) {
+  double distance(in Point p) const {
     return (this - p).norm();
   }
 
   pure @nogc
-  Point opBinary(string op)(Point pt) {
+  Point opBinary(string op)(in Point pt) const {
     return mixin(
       "Point(x " ~op~ " pt.x, y " ~op~ " pt.y)");
   }
 
   pure @nogc
-  Point opBinary(string op)(ulong v) {
+  Point opBinary(string op)(in ulong v) const {
     return mixin(
       "Point(x " ~op~ " v, y " ~op~ " v)");
   }
+
+  pure @nogc
+  Point closest(in Points choices) const {
+    // import std.algorithm: minElement;
+    // auto dist = &this.distance;
+    // return choices.minElement!dist;
+    size_t minIx;
+    double minDist = double.max;
+    foreach (ix, choice; choices) {
+      double dist = this.distance(choice);
+      if (dist < minDist) {
+        minIx = ix;
+        minDist = dist;
+      }
+    }
+    return choices[minIx];
+  }
+
 }
 
 // -----------------------------------------------

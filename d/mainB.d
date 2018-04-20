@@ -4,7 +4,7 @@ ldc2 -betterC -O -release -mcpu=native mainB.d
 
 static immutable n = 10;
 static immutable iterations = 15;
-static immutable executions = 30;
+static immutable executions = 1_000;
 
 static immutable nrOfPoints = 100_000;
 
@@ -40,7 +40,7 @@ void readPoints(ref Points pts) {
 
   auto f = fopen("../points.txt", "r+");
   scope (exit) f.fclose();
-  foreach (i; 0 .. nrOfPoints) {
+  foreach (i; 0 .. pts.length) {
     float xx, yy;
     fscanf(f, "%f %f\n", &xx, &yy);
     pts[i].x = xx;
