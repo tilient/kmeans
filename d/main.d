@@ -1,15 +1,8 @@
-import std.stdio;
-import std.json;
-import std.file;
-import std.datetime.stopwatch;
-import std.algorithm.iteration: map, reduce;
-import std.array:array;
 
 /* -----------------------------------------------
 to compile:
 ldc2 -O -release -mcpu=native main.d
 gdc -O3 -o main main.d
-
 ----------------------------------------------- */
 
 static immutable n = 10;
@@ -18,6 +11,9 @@ static immutable executions = 30;
 
 void main()
 {
+  import std.stdio;
+  import std.datetime.stopwatch;
+
   Points points = readPoints("../points.json");
   Point[n] centroids;
 
@@ -33,7 +29,13 @@ void main()
     writefln("%s : %s", ix, pt);
 }
 
-Points readPoints(in string filename) {
+Points readPoints(in string filename)
+{
+  import std.json;
+  import std.file;
+  import std.algorithm.iteration: map;
+  import std.array : array;
+
   return parseJSON(cast(char[])read(filename))
            .array()
            .map!(v => v.array())
@@ -43,7 +45,11 @@ Points readPoints(in string filename) {
 }
 
 void run(ref Point[n] centroids,
-         in Points points) {
+         in Points points)
+{
+  import std.algorithm.iteration : map;
+  import std.array : array;
+
   centroids[] = points[0 .. n];
   foreach (_; 0 .. iterations)
     centroids[] = points.cluster(centroids)
@@ -52,7 +58,8 @@ void run(ref Point[n] centroids,
 
 pure
 Points[] cluster(in Points points,
-                 in Points centroids) {
+                 in Points centroids)
+{
   Points[Point] clusters;
   foreach (pt; points)
     clusters[pt.closest(centroids)] ~= pt;
@@ -60,7 +67,10 @@ Points[] cluster(in Points points,
 }
 
 pure
-Point average(in Points pnts) {
+Point average(in Points pnts)
+{
+  import std.algorithm.iteration : reduce;
+
   return pnts.reduce!"a+b" / pnts.length;
 }
 
@@ -68,13 +78,16 @@ Point average(in Points pnts) {
 
 alias Points = Point[];
 
-struct Point {
+struct Point
+{
 	double x;
 	double y;
 
   pure @nogc
-  double norm() const {
-    import core.math: sqrt;
+  double norm() const
+  {
+    import core.math : sqrt;
+
   	return sqrt(x^^2 + y^^2);
   }
 
@@ -84,19 +97,22 @@ struct Point {
   }
 
   pure @nogc
-  Point opBinary(string op)(in Point pt) const {
+  Point opBinary(string op)(in Point pt) const
+  {
     return mixin(
       "Point(x " ~op~ " pt.x, y " ~op~ " pt.y)");
   }
 
   pure @nogc
-  Point opBinary(string op)(in ulong v) const {
+  Point opBinary(string op)(in ulong v) const
+  {
     return mixin(
       "Point(x " ~op~ " v, y " ~op~ " v)");
   }
 
   pure @nogc
-  Point closest(in Points choices) const {
+  Point closest(in Points choices) const
+  {
     // import std.algorithm: minElement;
     // auto dist = &this.distance;
     // return choices.minElement!dist;
