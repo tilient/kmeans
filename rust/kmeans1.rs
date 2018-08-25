@@ -5,42 +5,41 @@ use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader};
 use std::mem;
 use std::time::Instant;
+use std::ops::Add;
 
 //--- main ---------------------------------------------------
-
-const TIMES: u64 = 30;
-const ITERS: u64 = 15;
-const NR_OF_CENTROIDS: usize = 10;
 
 fn main()
 {
   let points = load_points();
   let start = Instant::now();
-  for _ in 1 .. TIMES {
-    run(&points);
+  for _ in 1..30 {
+    run(&points, 10, 15);
   }
-  let centroids = run(&points);
+  let centroids = run(&points, 10, 15);
   let elapsed = start.elapsed();
   let total_time = 1000.0 * elapsed.as_secs() as f64
                  + elapsed.subsec_nanos() as f64 * 1e-6;
-  let iter_time = (total_time as u64) / TIMES;
+  let iter_time = (total_time as u64) / 30;
   println!("The average time is {} ms", iter_time);
   for pt in centroids.iter() {
     println!("(x: {}, y: {})", pt.0, pt.1);
   }
 }
 
-fn run(points: &Points) -> Points
+fn run(points: &Points, n: usize, iters: u32) -> Points
 {
   let mut centroids: Points =
-    points.iter().take(NR_OF_CENTROIDS).cloned().collect();
-  for _ in 0 .. ITERS {
-    centroids = calc_centroids(points, &centroids)
+    points.iter().take(n).cloned().collect();
+  for _ in 0..iters {
+    centroids = clusters(points, &centroids).iter()
+                  .map(avg).collect();
   }
   centroids
 }
 
-fn calc_centroids(xs: &Points, centroids: &Points) -> Points
+fn clusters<'a>(xs: &'a Points, centroids: &Points)
+   -> Vec<RefPoints<'a>>
 {
   let mut groups: HashMap<_, RefPoints> = HashMap::new();
   for pt in xs.iter() {
@@ -49,15 +48,13 @@ fn calc_centroids(xs: &Points, centroids: &Points) -> Points
       Vacant(slot) => { slot.insert(vec![pt]); }
     }
   }
-  groups.values().map(avg).collect()
+  groups.values().cloned().collect()
 }
 
 //-- Point ---------------------------------------------------
 
-#[derive(PartialEq, PartialOrd, Copy, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
 struct Point(f64, f64);
-
-const ZERO_POINT: Point = Point(0.0, 0.0);
 
 impl Hash for Point
 {
@@ -86,18 +83,17 @@ impl Point
 
   fn square_dist(&self, w: &Point) -> f64
   {
-    let (dx, dy) = (self.0 - w.0, self.1 - w.1);
+    let dx = self.0 - w.0;
+    let dy = self.1 - w.1;
     dx * dx + dy * dy
   }
+}
 
-  fn add(self, other: &Point) -> Point
-  {
+impl Add for Point {
+  type Output = Point;
+
+  fn add(self, other: Point) -> Point {
     Point(self.0 + other.0, self.1 + other.1)
-  }
-
-  fn div(self, k: f64) -> Point
-  {
-    Point(self.0 / k, self.1 / k)
   }
 }
 
@@ -108,9 +104,10 @@ type RefPoints<'c> = Vec<&'c Point>;
 
 fn avg(points: &RefPoints) -> Point
 {
-  points.iter()
-    .fold(ZERO_POINT, |p, &q| p.add(q))
-    .div(points.len() as f64)
+  let Point(x, y) =
+    points.iter().fold(Point(0.0, 0.0), |p, &&q| p + q);
+  let k = points.len() as f64;
+  Point(x / k, y / k)
 }
 
 fn load_points() -> Points
@@ -118,10 +115,11 @@ fn load_points() -> Points
   let mut points = Vec::new();
   let file = File::open("../points.txt").unwrap();
   for line in BufReader::new(file).lines() {
-    let v = line.unwrap()
-                .split_whitespace()
-                .filter_map(|s| s.parse::<f64>().ok())
-                .collect::<Vec<_>>();
+    let v = line
+      .unwrap()
+      .split_whitespace()
+      .filter_map(|s| s.parse::<f64>().ok())
+      .collect::<Vec<_>>();
     points.push(Point(v[0], v[1]));
   }
   points
