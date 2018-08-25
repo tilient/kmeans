@@ -90,7 +90,7 @@ impl Point
     dx * dx + dy * dy
   }
 
-  fn add(self, other: &Point) -> Point
+  fn add(self, other: &&Point) -> Point
   {
     Point(self.0 + other.0, self.1 + other.1)
   }
@@ -109,7 +109,7 @@ type RefPoints<'c> = Vec<&'c Point>;
 fn avg(points: &RefPoints) -> Point
 {
   points.iter()
-    .fold(ZERO_POINT, |p, &q| p.add(q))
+    .fold(ZERO_POINT, Point::add)
     .div(points.len() as f64)
 }
 
