@@ -97,6 +97,13 @@ struct Point
   }
 
   pure @nogc
+  double squareDistance(in Point p) const {
+    double dx = this.x - p.x;
+    double dy = this.y - p.y;
+    return dy^^2 + dy^^2;
+  }
+
+  pure @nogc
   Point opBinary(string op)(in Point pt) const
   {
     return mixin(
@@ -119,7 +126,7 @@ struct Point
     size_t minIx;
     double minDist = double.max;
     foreach (ix, choice; choices) {
-      double dist = this.distance(choice);
+      double dist = this.squareDistance(choice);
       if (dist < minDist) {
         minIx = ix;
         minDist = dist;

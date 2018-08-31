@@ -51,7 +51,8 @@ void readPoints(ref Points pts) {
 pure @nogc
 void run(ref Centroids centroids,
          ref Points points) {
-  centroids[] = points[0 .. n];
+  foreach (ix; 0 .. n)
+    centroids[ix] = points[ix];
   foreach (_; 0 .. iterations) {
     Centroids cntrs;
     ulong[n]  cnts;

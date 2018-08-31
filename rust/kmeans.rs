@@ -1,10 +1,4 @@
-use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
-use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io::{BufRead, BufReader};
-use std::mem;
-use std::time::Instant;
 
 //--- main ---------------------------------------------------
 
@@ -14,6 +8,8 @@ const NR_OF_CENTROIDS: usize = 10;
 
 fn main()
 {
+  use std::time::Instant;
+
   let points = load_points();
   let start = Instant::now();
   for _ in 1 .. TIMES {
@@ -23,8 +19,8 @@ fn main()
   let elapsed = start.elapsed();
   let total_time = 1000.0 * elapsed.as_secs() as f64
                  + elapsed.subsec_nanos() as f64 * 1e-6;
-  let iter_time = (total_time as u64) / TIMES;
-  println!("The average time is {} ms", iter_time);
+  println!("Average Time: {} ms",
+           (total_time as u64) / TIMES);
   for pt in centroids.iter() {
     println!("(x: {}, y: {})", pt.0, pt.1);
   }
@@ -42,6 +38,9 @@ fn run(points: &Points) -> Points
 
 fn calc_centroids(xs: &Points, centroids: &Points) -> Points
 {
+  use std::collections::HashMap;
+  use std::collections::hash_map::Entry::{Occupied, Vacant};
+
   let mut groups: HashMap<_, RefPoints> = HashMap::new();
   for pt in xs.iter() {
     match groups.entry(pt.closest(centroids)) {
@@ -63,6 +62,8 @@ impl Hash for Point
 {
   fn hash<H: Hasher>(&self, state: &mut H)
   {
+    use std::mem;
+
     let x: u64 = unsafe { mem::transmute(self.0) };
     let y: u64 = unsafe { mem::transmute(self.1) };
     x.hash(state);
@@ -115,6 +116,9 @@ fn avg(points: &RefPoints) -> Point
 
 fn load_points() -> Points
 {
+  use std::fs::File;
+  use std::io::{BufRead, BufReader};
+
   let mut points = Vec::new();
   let file = File::open("../points.txt").unwrap();
   for line in BufReader::new(file).lines() {
