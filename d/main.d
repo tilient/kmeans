@@ -53,17 +53,22 @@ void run(ref Point[n] centroids,
   centroids[] = points[0 .. n];
   foreach (_; 0 .. iterations)
     centroids[] = points.cluster(centroids)
-                        .map!(average).array()[];
+                    .map!(average).array()[];
 }
 
-pure
 Points[] cluster(in Points points,
                  in Points centroids)
 {
-  Points[Point] clusters;
+  import std.array : Appender, appender, array;
+  import std.algorithm.iteration: map;
+
+  Appender!(Points)[Point] clusters;
+  foreach (c; centroids)
+    clusters[c] = appender!(Points)();
   foreach (pt; points)
     clusters[pt.closest(centroids)] ~= pt;
-  return clusters.values();
+  return clusters.values()
+           .map!(a => a.data).array();
 }
 
 pure
